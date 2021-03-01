@@ -4,9 +4,6 @@ on:
   push:
     paths-ignore:
       - '**.md'
-  pull_request:
-    paths-ignore:
-      - '**.md'
 
 jobs:
   lint:
@@ -19,7 +16,6 @@ jobs:
     steps:
       - uses: actions/checkout@master
 
-      # https://github.com/microsoft/TypeScript/wiki/Node-Target-Mapping
       - name: Use Node.js 14.x
         uses: actions/setup-node@v1
         with:
@@ -58,7 +54,6 @@ jobs:
     steps:
       - uses: actions/checkout@master
 
-      # https://github.com/microsoft/TypeScript/wiki/Node-Target-Mapping
       - name: Use Node.js 14.x
         uses: actions/setup-node@v1
         with:
@@ -81,11 +76,6 @@ jobs:
       - name: Unit test
         run: yarn test:unit
 
-      - name: Update coverage report
-        uses: codecov/codecov-action@v1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-
   e2e_tests:
     name: E2E test
     env:
@@ -96,7 +86,6 @@ jobs:
     steps:
       - uses: actions/checkout@master
 
-      # https://github.com/microsoft/TypeScript/wiki/Node-Target-Mapping
       - name: Use Node.js 14.x
         uses: actions/setup-node@v1
         with:
@@ -127,5 +116,4 @@ jobs:
           start: yarn serve dist
           wait-on: http://localhost:5000
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
