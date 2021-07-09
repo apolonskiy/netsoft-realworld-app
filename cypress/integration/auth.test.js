@@ -45,17 +45,16 @@ describe('Login and logout', () => {
   })
 
   it('should display error when submit an invalid form (password not match)', () => {
-    cy.intercept('POST', /users\/login/, {
-      statusCode: 422,
-      body: { errors: { 'email or password': ['is invalid'] } },
-    }).as('failedLogin')
+    cy.intercept('POST', /users\/login/).as('failedLogin')
     cy.visit(ROUTES.LOGIN)
 
     loginPage.enterEmail('foo@example.com')
-    loginPage.enterPassword('foo@example.com')
+    loginPage.enterPassword('wrongPassword')
     loginPage.submitLogin()
 
-    cy.wait('@failedLogin')
+    cy.wait('@failedLogin').then(interception => {
+      expect(interception.response.body.errors['email or password']).to.eql(['is invalid'])
+    })
     loginPage.getFormErrors().should('have.text', 'email or password is invalid')
   })
 

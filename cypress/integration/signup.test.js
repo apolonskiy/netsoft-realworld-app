@@ -42,10 +42,7 @@ describe('Register', () => {
   })
 
   it('should display error message when submit the form that username already exist', () => {
-    cy.intercept('POST', /users$/, {
-      statusCode: 422,
-      body: { errors: { username: ['has already been taken'] } },
-    }).as('registerRequest')
+    cy.intercept('POST', /users$/).as('registerRequest')
 
     cy.visit(ROUTES.REGISTER)
 
@@ -55,17 +52,16 @@ describe('Register', () => {
 
     cy.get('[type="submit"]').click()
 
-    cy.wait('@registerRequest')
+    cy.wait('@registerRequest').then(interception => {
+      expect(interception.response.body.errors.username).to.eql(['has already been taken'])
+    })
     cy.get('.error-messages li').then(([$el]) => {
       expect($el).to.have.text('username has already been taken')
     })
   })
 
   it('should display error message when submit the form that email already exist', () => {
-    cy.intercept('POST', /users$/, {
-      statusCode: 422,
-      body: { errors: { email: ['has already been taken'] } },
-    }).as('registerRequest')
+    cy.intercept('POST', /users$/).as('registerRequest')
 
     cy.visit(ROUTES.REGISTER)
 
@@ -75,17 +71,16 @@ describe('Register', () => {
 
     cy.get('[type="submit"]').click()
 
-    cy.wait('@registerRequest')
+    cy.wait('@registerRequest').then(interception => {
+      expect(interception.response.body.errors.email).to.eql(['has already been taken'])
+    })
     cy.get('.error-messages li').then(([$el]) => {
       expect($el).to.have.text('email has already been taken')
     })
   })
 
   it('should display error message when submit the form that username is too long', () => {
-    cy.intercept('POST', /users$/, {
-      statusCode: 422,
-      body: { errors: { username: ['is too long (maximum is 20 characters)'] } },
-    }).as('registerRequest')
+    cy.intercept('POST', /users$/).as('registerRequest')
 
     cy.visit(ROUTES.REGISTER)
 
@@ -95,7 +90,9 @@ describe('Register', () => {
 
     cy.get('[type="submit"]').click()
 
-    cy.wait('@registerRequest')
+    cy.wait('@registerRequest').then(interception => {
+      expect(interception.response.body.errors.username).to.eql(['is too long (maximum is 20 characters)'])
+    })
     cy.get('.error-messages li').then(([$els]) => {
       expect($els).to.have.text('username is too long (maximum is 20 characters)')
     })
@@ -104,10 +101,7 @@ describe('Register', () => {
   it('should display error message when submit the form when password is less than 8 symbols', () => {
     // this one behaves inconsistently on manual and automation run
     // for manual it has form check available for input length, but CY can send request with less than 8 symbols
-    cy.intercept('POST', /users$/, {
-      statusCode: 422,
-      body: { errors: { password: ['is too short (minimum is 8 characters)'] } },
-    }).as('registerRequest')
+    cy.intercept('POST', /users$/).as('registerRequest')
 
     cy.visit(ROUTES.REGISTER)
 
@@ -117,7 +111,9 @@ describe('Register', () => {
 
     cy.get('[type="submit"]').click()
 
-    cy.wait('@registerRequest')
+    cy.wait('@registerRequest').then(interception => {
+      expect(interception.response.body.errors.password).to.eql(['is too short (minimum is 8 characters)'])
+    })
     cy.get('.error-messages li').then(([$els]) => {
       expect($els).to.have.text('password is too short (minimum is 8 characters)')
     })
