@@ -1,85 +1,74 @@
 import { ROUTES } from '../constants'
 
-describe('Auth', () => {
-  describe('Login and logout', () => {
-    it('should login success when submit a valid login form', () => {
-      cy.login()
+import { LoginPage } from '../pageModels/login.page'
 
-      cy.url().should('match', /\/#\/$/)
-    })
+const loginPage = new LoginPage(cy)
 
-    it('should logout when click logout button', () => {
-      cy.get(`[href="${ROUTES.SETTINGS}"]`).click()
+describe('Login and logout', () => {
+  it('should render login page with all inputs and buttons', () => {
+    // Test done for sake of techTask, this should be covered by FE unit tests in a perfect world
+    cy.visit(ROUTES.LOGIN)
+    cy.get(`[href="${ROUTES.HOME}"]`).should('be.visible')
+    cy.get(`[href="${ROUTES.LOGIN}"]`)
+      .should('be.visible')
+      .and('have.class', 'active')
+    cy.get(`[href="${ROUTES.REGISTER}"]`).should('be.visible')
+    loginPage.getSignUpRedirectButton()
+      .should('be.visible')
+      .and('have.attr', 'href', '#/register')
+    loginPage.getEmailField().should('have.attr', 'placeholder', 'Email')
+    loginPage.getPasswordField().should('have.attr', 'placeholder', 'Password')
+    loginPage.getSubmitButton().should('be.disabled')
 
-      cy.get('button.btn-outline-danger')
-        .contains('logout')
-        .click()
+    loginPage.enterEmail('some@email.com')
+    loginPage.getSubmitButton().should('be.disabled')
 
-      cy.get('ul.navbar-nav')
-        .should('contain', 'Sign in')
-        .should('contain', 'Sign up')
-    })
+    loginPage.enterPassword('password')
+    loginPage.getSubmitButton().should('be.enabled')
+  })
+  it('should login success when submit a valid login form', () => {
+    loginPage.performLogin()
 
-    it('should display error when submit an invalid form (password not match)', () => {
-      cy.intercept('POST', /users\/login/, {
-        statusCode: 422,
-        body: { errors: { 'email or password': ['is invalid'] } },
-      })
-      cy.visit(ROUTES.LOGIN)
-
-      cy.get('[type="email"]').type('foo@example.com')
-      cy.get('[type="password"]').type('12345678')
-      cy.get('[type="submit"]').click()
-
-      cy.contains('email or password is invalid')
-    })
-
-    it('should display format error without API call when submit an invalid format', () => {
-      cy.intercept('POST', /users\/login/).as('loginRequest')
-      cy.visit(ROUTES.LOGIN)
-
-      cy.get('[type="email"]').type('foo')
-      cy.get('[type="password"]').type('123456')
-      cy.get('[type="submit"]').click()
-
-      cy.get('form').then(([$el]) => {
-        cy.wrap($el.checkValidity()).should('to.be', false)
-      })
-    })
+    cy.url().should('match', /\/#\/$/)
   })
 
-  describe('Register', () => {
-    it('should call register API and jump to home page when submit a valid form', () => {
-      cy.intercept('POST', /users$/, { fixture: 'user.json' }).as('registerRequest')
-      cy.visit(ROUTES.REGISTER)
+  it('should logout when click logout button', () => {
+    cy.get(`[href="${ROUTES.SETTINGS}"]`).click()
 
-      cy.get('[placeholder="Your Name"]').type('foo')
-      cy.get('[placeholder="Email"]').type('foo@example.com')
-      cy.get('[placeholder="Password"]').type('12345678')
+    cy.get('button.btn-outline-danger')
+      .contains('logout')
+      .click()
 
-      cy.get('[type="submit"]').click()
+    cy.get('ul.navbar-nav')
+      .should('contain', 'Sign in')
+      .should('contain', 'Sign up')
+  })
 
-      cy.wait('@registerRequest')
-      cy.url().should('match', /\/#\/$/)
+  it('should display error when submit an invalid form (password not match)', () => {
+    cy.intercept('POST', /users\/login/).as('failedLogin')
+    cy.visit(ROUTES.LOGIN)
+
+    loginPage.enterEmail('foo@example.com')
+    loginPage.enterPassword('wrongPassword')
+    loginPage.submitLogin()
+
+    cy.wait('@failedLogin').then(interception => {
+      expect(interception.response.body.errors['email or password']).to.eql(['is invalid'])
     })
+    loginPage.getFormErrors().should('have.text', 'email or password is invalid')
+  })
 
-    it('should display error message when submit the form that username already exist', () => {
-      cy.intercept('POST', /users$/, {
-        statusCode: 422,
-        body: { errors: { email: ['has already been taken'], username: ['has already been taken'] } },
-      }).as('registerRequest')
+  it('should display format error without API call when submit an invalid format', () => {
+    cy.intercept('POST', /users\/login/).as('loginRequest')
+    cy.visit(ROUTES.LOGIN)
 
-      cy.visit(ROUTES.REGISTER)
+    loginPage.enterEmail('foo')
+    loginPage.enterPassword('123456')
+    loginPage.submitLogin()
 
-      cy.get('[placeholder="Your Name"]').type('foo')
-      cy.get('[placeholder="Email"]').type('foo@example.com')
-      cy.get('[placeholder="Password"]').type('12345678')
-
-      cy.get('[type="submit"]').click()
-
-      cy.wait('@registerRequest')
-      cy.contains('email has already been taken')
-      cy.contains('username has already been taken')
+    loginPage.getForm().then(([$el]) => {
+      cy.wrap($el.checkValidity()).should('be.false')
     })
+    cy.isRouteCalled('@loginRequest').should('be.false')
   })
 })
