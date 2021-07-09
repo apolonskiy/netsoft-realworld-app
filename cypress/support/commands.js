@@ -25,3 +25,20 @@ Cypress.Commands.add('login', (username = 'plumrx') => {
 
   cy.url().should('match', /#\/$/)
 })
+
+Cypress.Commands.add('isRouteCalled', alias =>
+  cy.get(alias).then(interceptions => interceptions !== null),
+)
+
+Cypress.Commands.add('apiLogin', () => {
+  cy.fixture('user').as('userData')
+  cy.get('@userData').then(userData => {
+    cy.request('POST', 'https://conduit.productionready.io/api/users/login',
+      { user: { email: userData.user.email, password: userData.user.password } })
+      .its('body')
+      .then(body => {
+        window.localStorage.setItem('user', JSON.stringify(body.user))
+      })
+      .as('userResponse')
+  })
+})

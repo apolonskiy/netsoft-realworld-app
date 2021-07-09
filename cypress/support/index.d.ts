@@ -4,6 +4,8 @@
 
 declare namespace Cypress {
   interface Chainable {
-    login(): void
+    login(username): void,
+    isRouteCalled(alias): void,
+    apiLogin(): void
   }
 }

@@ -10,6 +10,8 @@
     "lint": "concurrently 'yarn tsc' 'yarn lint:script' 'yarn lint:vti'",
     "test:unit": "jest --coverage",
     "test:e2e": "yarn build && concurrently -k \"serve dist\" \"cypress run -c baseUrl=http://localhost:5000\"",
+    "test:e2e:local": "cypress run",
+    "test:e2e:open:local": "cypress open",
     "test": "yarn test:unit && yarn test:e2e"
   },
   "dependencies": {
